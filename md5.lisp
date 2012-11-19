@@ -10,6 +10,11 @@
 (defvar *k-list* (loop for i from 0 to 63 collect 
 		      (floor (* (expt 2 32) (abs (sin (+ i 1)))))))
 
+(defun byte-to-dword (lst)
+  (let ((result 0))
+    (dolist (item lst result)
+      (incf result (+ (* (expt 2 (* 8 (position item lst))) item))))))
+
 (defun string-to-code-list (string)
   (loop for x across string collect (char-code x)))
 
@@ -48,10 +53,7 @@
 (defmacro 32integer (num)
   `(ldb (byte 32 0) ,num))
 
-(defun byte-to-dword (lst)
-  (let ((result 0))
-    (dolist (item lst result)
-      (incf result (+ (* (expt 2 (* 8 (position item lst))) item))))))
+
 
 (defun md5 (string)
   (let ((512bit-list (combo-list (pre-processing (string-to-code-list string)) 64))
