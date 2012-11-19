@@ -89,7 +89,7 @@
 		  (setf h0 (32integer (+ h0 a)))
 		  (setf h1 (32integer (+ h1 b)))
 		  (setf h2 (32integer (+ h2 c)))
-		  (setf h3 (32integer (+ h3 d)))
+		  (setf h3 (32integer (+ h3 d)))))
     (format nil "~8x ~8x ~8x ~8x" h0 h1 h2 h3))))
 	       
       
