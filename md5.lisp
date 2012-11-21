@@ -1,6 +1,6 @@
-(defpackage :liang.rannger.md5
-  (:use :common-lisp)
-  (:export :md5))
+;(defpackage :liang.rannger.md5
+;  (:use :common-lisp)
+;  (:export :md5))
 
 (defvar *r-list* '(7  12  17  22   7  12  17  22   7  12  17  22   7  12  17  22 
 		   5   9  14  20   5   9  14  20   5   9  14  20   5   9  14  20
@@ -8,7 +8,7 @@
 		   6  10  15  21   6  10  15  21   6  10  15  21   6  10  15  21))
 
 (defvar *k-list* (loop for i from 0 to 63 collect 
-		      (floor (* (expt 2 32) (abs (sin (+ i 1)))))))
+		      (truncate (* (expt 2 32) (abs (sin (+ i 1)))))))
 
 (defun byte-to-dword (lst)
   (let ((result 0))
@@ -31,10 +31,7 @@
 
 (defun left-rotate (num rotate-bit &optional (length-in-bit 32))
   (if (and (numberp num) (numberp rotate-bit))
-	   (let ((number (byte-to-dword (reverse (loop for i from 0 to (1- (/ 32 8)) collect (ldb (byte 8 (* 8 i)) num))))))
-	     (let ((right-part (ldb (byte rotate-bit (- length-in-bit rotate-bit)) number))
-		   (left-part (ldb (byte (- length-in-bit rotate-bit) 0) number)))
-	       (+ right-part (* (expt 2 rotate-bit) left-part))))))
+      (logior (ldb (byte length-in-bit 0) (ash num rotate-bit)) (ash num (- rotate-bit length-in-bit)))))
 
 (defun pre-processing (lst)
   (let ((ret-list (copy-list lst)))
@@ -68,7 +65,7 @@
 	(h2 #x98BADCFE)
 	(h3 #x10325476))
     (loop for lst in 512bit-list 
-	 do(let ((dword-list (mapcar #'reverse  (combo-list lst))))
+	 do(let ((dword-list (mapcar #'(lambda (lst) (reverse lst))  (combo-list lst))))
 		  (dotimes (i 63)
 		    (cond 
 		      ((and (<= 0 i) (<= i 15))
@@ -95,5 +92,3 @@
 		  (setf h2 (32integer (+ h2 c)))
 		  (setf h3 (32integer (+ h3 d)))))
     (format nil "~8x ~8x ~8x ~8x" h0 h1 h2 h3)))
-	       
-      
