@@ -7,8 +7,8 @@
 			 4  11  16  23   4  11  16  23   4  11  16  23   4  11  16  23
 			 6  10  15  21   6  10  15  21   6  10  15  21   6  10  15  21))
 
-(defvar *k-list* (loop for i from 0 to 63 collect 
-		      (floor (* (expt 2 32) (abs (sin (float i 0.0d0)))))))
+(defparameter *k-list* (loop for i from 1 to 64 collect 
+		      (truncate (* (expt 2 32) (abs (sin (float i 0.0d0)))))))
 
 (defun byte-to-dword (lst)
   (destructuring-bind (byte1 byte2 byte3 byte4) lst
@@ -35,7 +35,7 @@
 (defun pre-processing (lst)
   (let ((ret-list (copy-list lst)))
     (nappend ret-list '(#x80))
-    (while (or (/= (mod (length ret-list) 64) 56) (<= (length ret-list) 56))
+    (while (/= (mod (length ret-list) 64) 56)
       (nappend ret-list '(0)))
     (append ret-list (loop for i from 0 to 7 collect (ldb (byte 8 (* i 8)) (* 8 (length lst)))))))
 
@@ -47,6 +47,11 @@
 (defmacro 32integer (num)
   `(ldb (byte 32 0) ,num))
 
+(defun list-left-rotate (lst)
+  (if (or (null lst) (>= 1 (length lst)))
+      lst
+      (let ((temp (last lst)))
+	(cons (car temp) (delete (car temp) lst)))))
 
 
 (defun md5 (string)
@@ -63,8 +68,8 @@
 	(h3 #x10325476))
     (loop for lst in 512bit-list 
 	 do(let ((dword-list (combo-list lst)))
-	     (format t "~a" (length dword-list))
 		  (dotimes (i 63)
+		    (format t "~x-----" (list a b c d))
 		    (cond 
 		      ((and (<= 0 i) (<= i 15))
 		       (setf f (32integer (logior (logand b c) (logandc1 b d))))
@@ -78,13 +83,15 @@
 		      ((and (<= 48 i) (<= i 63))
 		       (setf f (32integer (logior c (logorc2 b d))))
 		       (setf g (mod (* 7 i) 16))))
-		    (let ((temp (32integer d)))
-		      (setf d (32integer c))
-		      (setf c (32integer b))
-		      (setf b (32integer (+ b  (left-rotate 
-					       (+ a f (elt *k-list* i) (byte-to-dword (elt dword-list g))) 
+		      (setf a (32integer (+ b  (left-rotate 
+					       (32integer (+ a f (elt *k-list* i) (byte-to-dword (elt dword-list g)))) 
 					       (elt *r-list* i)))))
-		      (setf a (32integer temp))))
+		      (let ((temp (list-left-rotate (list a b c d))))
+			(setf a (first temp))
+			(setf b (second temp))
+			(setf c (third temp))
+			(setf d (fourth temp))
+			(format t "~x~%" temp)))
 		  (setf h0 (32integer (+ h0 a)))
 		  (setf h1 (32integer (+ h1 b)))
 		  (setf h2 (32integer (+ h2 c)))
