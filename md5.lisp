@@ -1,6 +1,8 @@
-;(defpackage :liang.rannger.md5
-;  (:use :common-lisp)
-;  (:export :md5))
+(defpackage :liang.rannger.md5
+  (:use :common-lisp)
+  (:export :md5))
+
+(in-package :liang.rannger.md5)
 
 (defparameter *r-list* '(7  12  17  22   7  12  17  22   7  12  17  22   7  12  17  22 
 			 5   9  14  20   5   9  14  20   5   9  14  20   5   9  14  20
@@ -47,11 +49,11 @@
 (defmacro 32integer (num)
   `(ldb (byte 32 0) ,num))
 
-(defun list-left-rotate (lst)
-  (if (or (null lst) (>= 1 (length lst)))
-      lst
-      (let ((temp (last lst)))
-	(cons (car temp) (delete (car temp) lst)))))
+(defun dword-to-byte (num)
+  (list (ldb (byte 8 0) num) 
+	(ldb (byte 8 8) num)
+	(ldb (byte 8 16) num)
+	(ldb (byte 8 24) num)))
 
 
 (defun md5 (string)
@@ -68,8 +70,7 @@
 	(h3 #x10325476))
     (loop for lst in 512bit-list 
 	 do(let ((dword-list (combo-list lst)))
-		  (dotimes (i 63)
-		    (format t "~x-----" (list a b c d))
+		  (dotimes (i 64)
 		    (cond 
 		      ((and (<= 0 i) (<= i 15))
 		       (setf f (32integer (logior (logand b c) (logandc1 b d))))
@@ -81,19 +82,19 @@
 		       (setf f (32integer (logxor b c d)))
 		       (setf g (mod (+ 5 (* 3 i)) 16)))
 		      ((and (<= 48 i) (<= i 63))
-		       (setf f (32integer (logior c (logorc2 b d))))
+		       (setf f (32integer (logxor c (logorc2 b d))))
 		       (setf g (mod (* 7 i) 16))))
-		      (setf a (32integer (+ b  (left-rotate 
-					       (32integer (+ a f (elt *k-list* i) (byte-to-dword (elt dword-list g)))) 
-					       (elt *r-list* i)))))
-		      (let ((temp (list-left-rotate (list a b c d))))
-			(setf a (first temp))
-			(setf b (second temp))
-			(setf c (third temp))
-			(setf d (fourth temp))
-			(format t "~x~%" temp)))
+		      (let ((temp d))
+			(setf d c)
+			(setf c b)
+			(setf b (32integer (+ b  (left-rotate 
+						  (32integer (+ a f (elt *k-list* i) (byte-to-dword (elt dword-list g)))) 
+						  (elt *r-list* i)))))
+			(setf a temp)))
 		  (setf h0 (32integer (+ h0 a)))
 		  (setf h1 (32integer (+ h1 b)))
 		  (setf h2 (32integer (+ h2 c)))
 		  (setf h3 (32integer (+ h3 d)))))
-    (format nil "~8x ~8x ~8x ~8x" h0 h1 h2 h3)))
+    (append (dword-to-byte h0) (dword-to-byte h1) (dword-to-byte h2) (dword-to-byte h3))))
+
+
