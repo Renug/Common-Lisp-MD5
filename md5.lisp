@@ -83,7 +83,7 @@
 			(setf d c)
 			(setf c b)
 			(setf b (32integer+ b  (left-rotate 
-						  (32integer (+ a f (elt *k-list* i) (byte-to-dword (elt dword-list g)))) 
+						  (32integer+ a f (elt *k-list* i) (byte-to-dword (elt dword-list g))) 
 						  (elt *r-list* i))))
 			(setf a temp)))
 		  (setf h0 (32integer+ h0 a))
